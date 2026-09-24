@@ -557,7 +557,8 @@ def tab_cartera():
     if cash_w > 0:
         cash_kind = st.radio(
             "¿Ese efectivo rinde algo?",
-            options=["No rinde nada (dólares parados en el broker)", "Money market / letras (tasa libre de riesgo)"],
+            options=["No rinde nada (dólares parados en el broker)",
+                     "Money market / letras (rinde la tasa libre de riesgo del período)"],
             horizontal=False,
             label_visibility="collapsed",
             key="cash_kind",
@@ -601,8 +602,20 @@ def tab_cartera():
             help="Se usa para calcular el Sharpe: cuánto rendimiento te dio cada unidad de riesgo, "
                  "por encima de lo que habrías ganado sin correr riesgo.",
         )
-        rf_manual = st.number_input("Tasa libre de riesgo anual (%)", min_value=0.0, max_value=25.0,
-                                    value=4.0, step=0.25, disabled=rf_auto)
+        if rf_auto:
+            rf_preview = risk_free_rate(start, end)
+            rf_manual = 4.0
+            if rf_preview is None:
+                st.caption("No se pudo consultar la tasa del período; se usará 4,00% anual.")
+            else:
+                st.caption(
+                    f"Tasa del período {start} → {end}: **{rf_preview:.2f}% anual** "
+                    f"(promedio de ^IRX, letra del Tesoro de EE.UU. a 13 semanas)."
+                )
+        else:
+            rf_preview = None
+            rf_manual = st.number_input("Tasa libre de riesgo anual (%)", min_value=0.0, max_value=25.0,
+                                        value=4.0, step=0.25)
 
     v1, v2 = st.columns([1, 2])
     if v1.button("Verificar tickers", use_container_width=True) and tickers:
